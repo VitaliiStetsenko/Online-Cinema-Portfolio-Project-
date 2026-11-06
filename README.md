@@ -29,6 +29,7 @@ Backend API для онлайн-кинотеатра. Проект реализ�
 - Создание профиля.
 - Изменение имени, фамилии, пола, даты рождения и информации о пользователе.
 - В модели предусмотрено поле для адреса аватара.
+- Загрузка JPEG, PNG и WEBP-аватара до 5 MB в MinIO: `POST /api/users/me/avatar`.
 
 ### Каталог фильмов
 
@@ -69,6 +70,9 @@ Backend API для онлайн-кинотеатра. Проект реализ�
 - Создание, редактирование и удаление комментариев.
 - Редактировать и удалять можно только собственные комментарии.
 - Лайки и дизлайки комментариев.
+- Лайки и дизлайки фильмов.
+- Ответы на комментарии через `parent_comment_id`.
+- Уведомления о лайках/дизлайках и ответах на комментарии.
 
 ### Корзина
 
@@ -434,6 +438,9 @@ curl.exe -X POST "http://localhost:8000/api/auth/register" `
 | GET | `/me` | Получить свой профиль |
 | POST | `/me/profile` | Создать профиль |
 | PUT | `/me/profile` | Изменить профиль |
+| POST | `/me/avatar` | Загрузить аватар в MinIO |
+| GET | `` | Список пользователей, только admin |
+| PATCH | `/{user_id}` | Смена роли или ручная активация, только admin |
 
 ### Фильмы: `/api/movies`
 
@@ -484,6 +491,8 @@ GET /api/movies?query=matrix&year_from=1990&imdb_from=7&sort_by=imdb&sort_order=
 | POST | `/{movie_id}` | Добавить фильм |
 | DELETE | `/{movie_id}` | Удалить фильм |
 
+Список избранного поддерживает параметры каталога: `query`, `genre_id`, `year_from`, `year_to`, `imdb_from`, `imdb_to`, `sort_by`, `sort_order`, `page`, `page_size`.
+
 ### Оценки и комментарии
 
 | Метод | Endpoint | Назначение |
@@ -495,6 +504,9 @@ GET /api/movies?query=matrix&year_from=1990&imdb_from=7&sort_by=imdb&sort_order=
 | PUT | `/api/comments/{comment_id}` | Изменить собственный комментарий |
 | DELETE | `/api/comments/{comment_id}` | Удалить собственный комментарий |
 | PUT | `/api/comments/{comment_id}/reaction?is_like=true` | Лайк или дизлайк комментария |
+| PUT | `/api/movies/{movie_id}/reaction?is_like=true` | Лайк или дизлайк фильма |
+| GET | `/api/notifications` | Уведомления текущего пользователя |
+| PATCH | `/api/notifications/{notification_id}/read` | Отметить уведомление прочитанным |
 
 ### Корзина: `/api/cart`
 

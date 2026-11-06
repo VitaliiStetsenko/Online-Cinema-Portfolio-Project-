@@ -59,3 +59,24 @@ async def test_swagger_requires_authentication(client: AsyncClient, auth_headers
     assert (await client.get("/docs")).status_code == 401
     assert (await client.get("/openapi.json")).status_code == 401
     assert (await client.get("/docs", headers=auth_headers)).status_code == 200
+
+
+async def test_upload_avatar_validates_and_stores_file(
+    client: AsyncClient, auth_headers: dict[str, str], monkeypatch
+) -> None:
+    """Avatar endpoint validates type and stores the returned object key."""
+    monkeypatch.setattr("app.api.users.upload_avatar", lambda *_: "avatars/test-avatar.png")
+    invalid = await client.post(
+        "/api/users/me/avatar",
+        headers=auth_headers,
+        files={"avatar": ("avatar.txt", b"text", "text/plain")},
+    )
+    assert invalid.status_code == 400
+
+    uploaded = await client.post(
+        "/api/users/me/avatar",
+        headers=auth_headers,
+        files={"avatar": ("avatar.png", b"png-data", "image/png")},
+    )
+    assert uploaded.status_code == 200
+    assert uploaded.json()["avatar"] == "avatars/test-avatar.png"
