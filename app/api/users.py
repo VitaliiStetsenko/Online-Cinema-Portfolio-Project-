@@ -1,6 +1,6 @@
 """User profile API endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.schemas.user import (
@@ -14,6 +14,7 @@ from app.schemas.user import (
 from app.services import user_service
 from app.api.dependencies import get_current_active_user, get_current_admin
 from app.models.user import User
+from app.services.storage_service import upload_avatar
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -58,6 +59,29 @@ async def update_my_profile(
     profile = await user_service.get_or_create_profile(db, current_user.id)
     updated_profile = await user_service.update_user_profile(db, profile, data)
     return updated_profile
+
+
+@router.post("/me/avatar", response_model=UserProfileResponse)
+async def upload_my_avatar(
+    avatar: UploadFile = File(...),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Upload a JPEG, PNG, or WEBP avatar to MinIO."""
+    if avatar.content_type not in {"image/jpeg", "image/png", "image/webp"}:
+        raise HTTPException(status_code=400, detail="Avatar must be JPEG, PNG, or WEBP")
+    content = await avatar.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Avatar must not exceed 5 MB")
+
+    profile = await user_service.get_or_create_profile(db, current_user.id)
+    try:
+        profile.avatar = upload_avatar(avatar.filename or "avatar", content, avatar.content_type)
+    except Exception as error:
+        raise HTTPException(status_code=503, detail="Avatar storage is unavailable") from error
+    await db.commit()
+    await db.refresh(profile)
+    return profile
 
 
 @router.get("", response_model=list[UserAdminResponse])

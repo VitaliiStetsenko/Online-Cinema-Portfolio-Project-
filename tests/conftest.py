@@ -111,6 +111,22 @@ async def moderator(db_session: AsyncSession) -> User:
 
 
 @pytest.fixture
+async def admin(db_session: AsyncSession) -> User:
+    """Create an active administrator user."""
+    group = await db_session.scalar(select(UserGroup).where(UserGroup.name == UserGroupEnum.ADMIN.value))
+    user = User(
+        email="admin@example.com",
+        hashed_password=get_password_hash("SecurePass123!"),
+        is_active=True,
+        group_id=group.id,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
 async def other_user(db_session: AsyncSession) -> User:
     """Create a second active regular user."""
     group = await db_session.scalar(select(UserGroup).where(UserGroup.name == UserGroupEnum.USER.value))
@@ -136,6 +152,12 @@ def auth_headers(user: User) -> dict[str, str]:
 def moderator_headers(moderator: User) -> dict[str, str]:
     """Build bearer authorization headers for the moderator."""
     return {"Authorization": f"Bearer {create_access_token({'sub': str(moderator.id)})}"}
+
+
+@pytest.fixture
+def admin_headers(admin: User) -> dict[str, str]:
+    """Build bearer authorization headers for the administrator."""
+    return {"Authorization": f"Bearer {create_access_token({'sub': str(admin.id)})}"}
 
 
 @pytest.fixture
