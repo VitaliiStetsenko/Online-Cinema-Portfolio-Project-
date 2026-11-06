@@ -146,9 +146,7 @@ async def set_movie_reaction(
 
 
 @router.get("/notifications", response_model=list[NotificationResponse])
-async def list_notifications(
-    current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)
-):
+async def list_notifications(current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)):
     """List notifications about comment replies and reactions."""
     return await interaction_service.list_notifications(db, current_user.id)
 

@@ -77,6 +77,7 @@ class CommentLike(Base):
 
 class MovieReaction(Base):
     """Movie likes and dislikes table."""
+
     __tablename__ = "movie_reactions"
     __table_args__ = (UniqueConstraint("user_id", "movie_id", name="uq_user_movie_reaction"),)
 
@@ -89,6 +90,7 @@ class MovieReaction(Base):
 
 class Notification(Base):
     """User notifications table."""
+
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)

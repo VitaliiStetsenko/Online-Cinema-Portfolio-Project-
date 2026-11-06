@@ -128,18 +128,30 @@ async def set_movie_reaction(db: AsyncSession, user_id: int, movie_id: int, is_l
 
 async def get_movie_reaction_summary(db: AsyncSession, movie_id: int, is_like: bool | None = None) -> dict:
     """Calculate movie like and dislike totals."""
-    likes = await db.scalar(
-        select(func.count(MovieReaction.id)).where(MovieReaction.movie_id == movie_id, MovieReaction.is_like.is_(True))
-    ) or 0
-    dislikes = await db.scalar(
-        select(func.count(MovieReaction.id)).where(MovieReaction.movie_id == movie_id, MovieReaction.is_like.is_(False))
-    ) or 0
+    likes = (
+        await db.scalar(
+            select(func.count(MovieReaction.id)).where(
+                MovieReaction.movie_id == movie_id, MovieReaction.is_like.is_(True)
+            )
+        )
+        or 0
+    )
+    dislikes = (
+        await db.scalar(
+            select(func.count(MovieReaction.id)).where(
+                MovieReaction.movie_id == movie_id, MovieReaction.is_like.is_(False)
+            )
+        )
+        or 0
+    )
     return {"movie_id": movie_id, "is_like": is_like, "likes_count": likes, "dislikes_count": dislikes}
 
 
 async def list_notifications(db: AsyncSession, user_id: int) -> Sequence[Notification]:
     """List notifications for a user from newest to oldest."""
-    result = await db.execute(select(Notification).where(Notification.user_id == user_id).order_by(Notification.created_at.desc()))
+    result = await db.execute(
+        select(Notification).where(Notification.user_id == user_id).order_by(Notification.created_at.desc())
+    )
     return result.scalars().all()
 
 

@@ -22,7 +22,9 @@ async def test_register_user(client: AsyncClient):
 async def test_register_duplicate_email(client: AsyncClient):
     """Test registration with duplicate email."""
     await client.post("/api/auth/register", json={"email": "test@example.com", "password": "SecurePass123!"})
-    response = await client.post("/api/auth/register", json={"email": "test@example.com", "password": "AnotherPass123!"})
+    response = await client.post(
+        "/api/auth/register", json={"email": "test@example.com", "password": "AnotherPass123!"}
+    )
     assert response.status_code == 400
 
 

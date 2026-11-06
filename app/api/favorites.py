@@ -46,8 +46,18 @@ async def list_favorites(
     if imdb_from and imdb_to and imdb_from > imdb_to:
         raise HTTPException(status_code=400, detail="imdb_from cannot exceed imdb_to")
     items, total = await favorite_service.list_favorites(
-        db, current_user.id, page, page_size, query, genre_id, year_from,
-        year_to, imdb_from, imdb_to, sort_by, sort_order,
+        db,
+        current_user.id,
+        page,
+        page_size,
+        query,
+        genre_id,
+        year_from,
+        year_to,
+        imdb_from,
+        imdb_to,
+        sort_by,
+        sort_order,
     )
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
