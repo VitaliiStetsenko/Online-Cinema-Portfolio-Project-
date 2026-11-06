@@ -3,7 +3,7 @@
 from datetime import datetime, date
 from typing import Optional
 from pydantic import BaseModel, Field
-from app.models.user import GenderEnum
+from app.models.user import GenderEnum, UserGroupEnum
 
 
 class UserProfileCreate(BaseModel):
@@ -54,3 +54,19 @@ class UserFullResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UserAdminUpdate(BaseModel):
+    """Administrator input for account status and role."""
+
+    group: Optional[UserGroupEnum] = None
+    is_active: Optional[bool] = None
+
+
+class UserAdminResponse(BaseModel):
+    """Administrator view of a user account."""
+
+    id: int
+    email: str
+    is_active: bool
+    group_name: str

@@ -51,3 +51,10 @@ async def get_current_moderator(current_user: User = Depends(get_current_active_
             detail="Moderator access required",
         )
     return current_user
+
+
+async def get_current_admin(current_user: User = Depends(get_current_active_user)) -> User:
+    """Require administrator access."""
+    if current_user.group.name != UserGroupEnum.ADMIN.value:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrator access required")
+    return current_user

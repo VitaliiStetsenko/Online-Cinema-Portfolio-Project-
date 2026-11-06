@@ -84,7 +84,7 @@ async def user(db_session: AsyncSession) -> User:
     group = await db_session.scalar(select(UserGroup).where(UserGroup.name == UserGroupEnum.USER.value))
     user = User(
         email="user@example.com",
-        hashed_password=get_password_hash("SecurePass123"),
+        hashed_password=get_password_hash("SecurePass123!"),
         is_active=True,
         group_id=group.id,
     )
@@ -100,7 +100,7 @@ async def moderator(db_session: AsyncSession) -> User:
     group = await db_session.scalar(select(UserGroup).where(UserGroup.name == UserGroupEnum.MODERATOR.value))
     user = User(
         email="moderator@example.com",
-        hashed_password=get_password_hash("SecurePass123"),
+        hashed_password=get_password_hash("SecurePass123!"),
         is_active=True,
         group_id=group.id,
     )
@@ -116,7 +116,7 @@ async def other_user(db_session: AsyncSession) -> User:
     group = await db_session.scalar(select(UserGroup).where(UserGroup.name == UserGroupEnum.USER.value))
     user = User(
         email="other@example.com",
-        hashed_password=get_password_hash("SecurePass123"),
+        hashed_password=get_password_hash("SecurePass123!"),
         is_active=True,
         group_id=group.id,
     )

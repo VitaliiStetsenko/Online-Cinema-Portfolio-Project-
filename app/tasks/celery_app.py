@@ -16,4 +16,10 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
+    beat_schedule={
+        "cleanup-expired-tokens-hourly": {
+            "task": "app.tasks.cleanup_tasks.cleanup_expired_tokens",
+            "schedule": 3600.0,
+        }
+    },
 )
