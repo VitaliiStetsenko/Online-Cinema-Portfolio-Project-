@@ -2,7 +2,7 @@
 
 Backend API для онлайн-кинотеатра. Проект реализован на FastAPI и предоставляет регистрацию пользователей, JWT-аутентификацию, каталог фильмов, поиск, избранное, оценки, комментарии и корзину покупок.
 
-Документация интерактивного API доступна через Swagger после запуска приложения: `http://localhost:8000/docs`.
+Интерактивная документация API доступна в Swagger без авторизации: `http://localhost:8000/docs`.
 
 ## Реализованные функции
 
@@ -219,7 +219,7 @@ docker compose exec app alembic upgrade head
 | Сервис | Адрес |
 | --- | --- |
 | FastAPI | `http://localhost:8001` |
-| Swagger UI | `http://localhost:8001/docs?access_token=ВАШ_ACCESS_TOKEN` |
+| Swagger UI | `http://localhost:8001/docs` |
 | Flower | `http://localhost:5555` |
 | MinIO API | `http://localhost:9010` |
 | MinIO Console | `http://localhost:9011` |
@@ -314,7 +314,7 @@ poetry run alembic upgrade head
 poetry run uvicorn app.main:app --reload
 ```
 
-После запуска откройте `http://localhost:8000/docs?access_token=ВАШ_ACCESS_TOKEN`.
+После запуска откройте `http://localhost:8000/docs`.
 
 ### Опционально: запустить Celery локально
 
@@ -539,7 +539,7 @@ pytest tests/ --cov=app
 - Для отправки email необходимо настроить SMTP.
 - Перед запуском в production измените `DEBUG=false`.
 - Alembic настроен в проекте; перед использованием PostgreSQL примените миграции.
-- Swagger в текущей реализации доступен по `/docs`. Если документация должна быть закрытой, требуется добавить отдельную проверку прав доступа для `/docs` и `/openapi.json`.
+- Swagger и OpenAPI-схема доступны без авторизации по `/docs` и `/openapi.json`. Защищенные API-endpoint по-прежнему требуют JWT access token.
 
 ## Автор
 
