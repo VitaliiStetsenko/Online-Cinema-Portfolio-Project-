@@ -218,9 +218,8 @@ docker compose exec app alembic upgrade head
 
 | Сервис | Адрес |
 | --- | --- |
-| FastAPI | `http://localhost:8000` |
-| Swagger UI | `http://localhost:8000/docs` |
-| ReDoc | `http://localhost:8000/redoc` |
+| FastAPI | `http://localhost:8001` |
+| Swagger UI | `http://localhost:8001/docs?access_token=ВАШ_ACCESS_TOKEN` |
 | Flower | `http://localhost:5555` |
 | MinIO Console | `http://localhost:9001` |
 | PostgreSQL | `localhost:5432` |
@@ -314,7 +313,7 @@ poetry run alembic upgrade head
 poetry run uvicorn app.main:app --reload
 ```
 
-После запуска откройте `http://localhost:8000/docs`.
+После запуска откройте `http://localhost:8000/docs?access_token=ВАШ_ACCESS_TOKEN`.
 
 ### Опционально: запустить Celery локально
 
