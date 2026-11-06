@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from app.core.config import settings
 from app.api.auth import router as auth_router
+from app.api.users import router as users_router
 
 app = FastAPI(
     title=settings.app_title,
@@ -10,6 +11,7 @@ app = FastAPI(
 )
 
 app.include_router(auth_router, prefix="/api")
+app.include_router(users_router, prefix="/api")
 
 
 @app.get("/")
