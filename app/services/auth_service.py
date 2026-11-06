@@ -14,6 +14,7 @@ from app.core.security import (
     create_refresh_token,
     decode_token,
 )
+from app.core.config import settings
 from app.tasks.email_tasks import send_activation_email, send_password_reset_email
 
 
@@ -126,7 +127,9 @@ async def create_tokens(db: AsyncSession, user: User) -> dict:
 
     # Save refresh token to DB
     refresh_token = RefreshToken(
-        user_id=user.id, token=refresh_token_str, expires_at=datetime.utcnow() + timedelta(days=7)
+        user_id=user.id,
+        token=refresh_token_str,
+        expires_at=datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days),
     )
     db.add(refresh_token)
     await db.commit()

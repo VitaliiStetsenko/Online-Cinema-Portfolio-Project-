@@ -39,7 +39,7 @@ async def list_named_entities(db: AsyncSession, model: type[CatalogModel]) -> Se
 
 
 async def delete_named_entity(db: AsyncSession, entity: CatalogModel) -> None:
-    """Delete an unused catalog entity."""
+    """Delete a catalog entity."""
     await db.delete(entity)
     await db.commit()
 
@@ -198,7 +198,7 @@ async def update_movie(db: AsyncSession, movie: Movie, data: MovieUpdate) -> Mov
 
 
 async def delete_movie(db: AsyncSession, movie: Movie) -> None:
-    """Delete a movie not referenced by a cart or purchase."""
+    """Delete a movie not referenced by a cart."""
     cart_item = await db.scalar(select(CartItem.id).where(CartItem.movie_id == movie.id))
     if cart_item:
         raise ValueError("Movie cannot be deleted while it is in user carts")

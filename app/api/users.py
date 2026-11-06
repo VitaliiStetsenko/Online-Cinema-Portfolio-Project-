@@ -14,6 +14,7 @@ from app.schemas.user import (
 from app.services import user_service
 from app.api.dependencies import get_current_active_user, get_current_admin
 from app.models.user import User
+from app.services.auth_service import get_user_by_id
 from app.services.storage_service import upload_avatar
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -98,8 +99,6 @@ async def update_user(
     _=Depends(get_current_admin),
 ):
     """Change a user's group or manually activate the account."""
-    from app.services.auth_service import get_user_by_id
-
     user = await get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
