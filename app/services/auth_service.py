@@ -138,7 +138,7 @@ async def refresh_access_token(db: AsyncSession, refresh_token_str: str) -> Opti
     """Refresh access token."""
     # Verify token
     payload = decode_token(refresh_token_str)
-    if not payload:
+    if not payload or payload.get("type") != "refresh":
         return None
 
     # Check if token exists in DB

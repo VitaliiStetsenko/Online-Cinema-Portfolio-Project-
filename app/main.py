@@ -25,6 +25,8 @@ app.include_router(interactions_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(movies_router, prefix="/api")
 app.include_router(catalog_router, prefix="/api")
+
+
 @app.get("/")
 async def root():
     """Health check endpoint."""

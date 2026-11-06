@@ -1,6 +1,12 @@
 """Tests for security utilities."""
 
-from app.core.security import get_password_hash, verify_password, create_access_token, decode_token
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    get_password_hash,
+    verify_password,
+)
 
 
 def test_password_hashing():
@@ -22,6 +28,15 @@ def test_jwt_token_creation_and_decoding():
     decoded = decode_token(token)
     assert decoded is not None
     assert decoded["sub"] == "123"
+    assert decoded["type"] == "access"
+
+
+def test_refresh_token_creation_and_decoding():
+    """Test refresh tokens are marked for refresh only."""
+    decoded = decode_token(create_refresh_token({"sub": "123"}))
+
+    assert decoded is not None
+    assert decoded["type"] == "refresh"
 
 
 def test_invalid_token_decoding():

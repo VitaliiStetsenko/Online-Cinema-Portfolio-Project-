@@ -51,6 +51,16 @@ async def test_activation_login_refresh_and_logout(client: AsyncClient, db_sessi
     assert tokens["access_token"]
     assert tokens["refresh_token"]
 
+    refresh_as_access = await client.post(
+        "/api/auth/change-password",
+        headers={"Authorization": f"Bearer {tokens['refresh_token']}"},
+        json={"old_password": "SecurePass123!", "new_password": "ChangedPass123!"},
+    )
+    assert refresh_as_access.status_code == 401
+
+    access_as_refresh = await client.post("/api/auth/refresh", json={"refresh_token": tokens["access_token"]})
+    assert access_as_refresh.status_code == 401
+
     refreshed = await client.post("/api/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
     assert refreshed.status_code == 200
     assert refreshed.json()["access_token"]
