@@ -15,6 +15,14 @@ async def test_moderator_manages_catalog_entities(client: AsyncClient, moderator
     assert response.status_code == 200
     assert response.json() == [{"id": created.json()["id"], "name": "PG-13"}]
 
+    renamed = await client.put(
+        f"/api/catalog/certifications/{created.json()['id']}",
+        json={"name": "PG"},
+        headers=moderator_headers,
+    )
+    assert renamed.status_code == 200
+    assert renamed.json()["name"] == "PG"
+
 
 async def test_regular_user_cannot_create_genre(client: AsyncClient, auth_headers: dict[str, str]) -> None:
     """Regular users cannot change the catalog."""

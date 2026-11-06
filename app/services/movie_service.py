@@ -44,6 +44,18 @@ async def delete_named_entity(db: AsyncSession, entity: CatalogModel) -> None:
     await db.commit()
 
 
+async def update_named_entity(db: AsyncSession, entity: CatalogModel, name: str) -> CatalogModel:
+    """Rename a genre, star, director, or certification."""
+    model = type(entity)
+    exists = await db.scalar(select(model).where(model.name.ilike(name)))
+    if exists and exists.id != entity.id:
+        raise ValueError("Entity with this name already exists")
+    entity.name = name
+    await db.commit()
+    await db.refresh(entity)
+    return entity
+
+
 async def _get_entities(db: AsyncSession, model: type[CatalogModel], ids: list[int]) -> Sequence[CatalogModel]:
     """Load and validate entities selected for a movie."""
     if not ids:

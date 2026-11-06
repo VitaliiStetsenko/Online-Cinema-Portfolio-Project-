@@ -13,6 +13,12 @@ class NamedEntityCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
 
 
+class NamedEntityUpdate(BaseModel):
+    """Input schema for renaming a catalog entity."""
+
+    name: str = Field(min_length=1, max_length=100)
+
+
 class NamedEntityResponse(BaseModel):
     """Response schema for a named catalog entity."""
 

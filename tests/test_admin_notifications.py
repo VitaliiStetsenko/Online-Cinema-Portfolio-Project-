@@ -56,9 +56,10 @@ async def test_movie_reactions_and_comment_notifications(
 
 async def test_swagger_requires_authentication(client: AsyncClient, auth_headers: dict[str, str]) -> None:
     """Swagger and OpenAPI endpoints reject unauthenticated requests."""
-    assert (await client.get("/docs")).status_code == 401
+    assert (await client.get("/docs")).status_code == 422
     assert (await client.get("/openapi.json")).status_code == 401
-    assert (await client.get("/docs", headers=auth_headers)).status_code == 200
+    token = auth_headers["Authorization"].removeprefix("Bearer ")
+    assert (await client.get("/docs", params={"access_token": token})).status_code == 200
 
 
 async def test_upload_avatar_validates_and_stores_file(

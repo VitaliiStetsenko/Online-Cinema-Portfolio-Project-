@@ -16,6 +16,7 @@ from app.schemas.movie import (
     MovieUpdate,
     NamedEntityCreate,
     NamedEntityResponse,
+    NamedEntityUpdate,
 )
 from app.services import movie_service
 
@@ -40,6 +41,19 @@ async def _delete_entity(model: type[CatalogModel], entity_id: int, db: AsyncSes
         raise HTTPException(status_code=404, detail="Catalog entity not found")
     await movie_service.delete_named_entity(db, entity)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+async def _update_entity(
+    model: type[CatalogModel], entity_id: int, data: NamedEntityUpdate, db: AsyncSession
+) -> CatalogModel:
+    """Rename a named catalog entity by identifier."""
+    entity = await movie_service.get_named_entity(db, model, entity_id)
+    if not entity:
+        raise HTTPException(status_code=404, detail="Catalog entity not found")
+    try:
+        return await movie_service.update_named_entity(db, entity, data.name)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @router.post("", response_model=MovieResponse, status_code=status.HTTP_201_CREATED)
@@ -158,6 +172,14 @@ async def delete_genre(entity_id: int, db: AsyncSession = Depends(get_db), _=Dep
     return await _delete_entity(Genre, entity_id, db)
 
 
+@catalog_router.put("/genres/{entity_id}", response_model=NamedEntityResponse)
+async def update_genre(
+    entity_id: int, data: NamedEntityUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_moderator)
+):
+    """Rename a genre. Moderator access is required."""
+    return await _update_entity(Genre, entity_id, data, db)
+
+
 @catalog_router.get("/directors", response_model=list[NamedEntityResponse])
 async def list_directors(db: AsyncSession = Depends(get_db)):
     """List all directors."""
@@ -178,6 +200,14 @@ async def delete_director(entity_id: int, db: AsyncSession = Depends(get_db), _=
     return await _delete_entity(Director, entity_id, db)
 
 
+@catalog_router.put("/directors/{entity_id}", response_model=NamedEntityResponse)
+async def update_director(
+    entity_id: int, data: NamedEntityUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_moderator)
+):
+    """Rename a director. Moderator access is required."""
+    return await _update_entity(Director, entity_id, data, db)
+
+
 @catalog_router.get("/stars", response_model=list[NamedEntityResponse])
 async def list_stars(db: AsyncSession = Depends(get_db)):
     """List all actors."""
@@ -194,6 +224,14 @@ async def create_star(data: NamedEntityCreate, db: AsyncSession = Depends(get_db
 async def delete_star(entity_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_moderator)):
     """Delete an actor. Moderator access is required."""
     return await _delete_entity(Star, entity_id, db)
+
+
+@catalog_router.put("/stars/{entity_id}", response_model=NamedEntityResponse)
+async def update_star(
+    entity_id: int, data: NamedEntityUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_moderator)
+):
+    """Rename an actor. Moderator access is required."""
+    return await _update_entity(Star, entity_id, data, db)
 
 
 @catalog_router.get("/certifications", response_model=list[NamedEntityResponse])
@@ -214,3 +252,11 @@ async def create_certification(
 async def delete_certification(entity_id: int, db: AsyncSession = Depends(get_db), _=Depends(get_current_moderator)):
     """Delete a certification. Moderator access is required."""
     return await _delete_entity(Certification, entity_id, db)
+
+
+@catalog_router.put("/certifications/{entity_id}", response_model=NamedEntityResponse)
+async def update_certification(
+    entity_id: int, data: NamedEntityUpdate, db: AsyncSession = Depends(get_db), _=Depends(get_current_moderator)
+):
+    """Rename a certification. Moderator access is required."""
+    return await _update_entity(Certification, entity_id, data, db)
