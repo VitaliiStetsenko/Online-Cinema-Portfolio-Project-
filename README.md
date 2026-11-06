@@ -221,7 +221,8 @@ docker compose exec app alembic upgrade head
 | FastAPI | `http://localhost:8001` |
 | Swagger UI | `http://localhost:8001/docs?access_token=ВАШ_ACCESS_TOKEN` |
 | Flower | `http://localhost:5555` |
-| MinIO Console | `http://localhost:9001` |
+| MinIO API | `http://localhost:9010` |
+| MinIO Console | `http://localhost:9011` |
 | PostgreSQL | `localhost:5432` |
 | Redis | `localhost:6379` |
 
