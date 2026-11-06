@@ -18,7 +18,7 @@ services:
       - "6379:6379"
 
   minio:
-    image: quay.io/minio/minio:latest
+    image: bitnami/minio:latest
     container_name: cinema_minio
     command: server /data --console-address ":9001"
     environment:
