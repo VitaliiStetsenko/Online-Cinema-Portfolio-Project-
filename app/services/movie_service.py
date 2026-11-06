@@ -2,7 +2,7 @@
 from collections.abc import Sequence
 from typing import TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -77,6 +77,76 @@ async def get_movie(db: AsyncSession, movie_id: int) -> Movie | None:
         )
     )
     return await db.scalar(statement)
+
+
+async def list_movies(
+    db: AsyncSession,
+    page: int,
+    page_size: int,
+    query: str | None = None,
+    genre_id: int | None = None,
+    year_from: int | None = None,
+    year_to: int | None = None,
+    imdb_from: float | None = None,
+    imdb_to: float | None = None,
+    sort_by: str = "name",
+    sort_order: str = "asc",
+) -> tuple[Sequence[Movie], int]:
+    """List movies with search, filtering, sorting, and pagination."""
+    filters = []
+    if query:
+        pattern = f"%{query.strip()}%"
+        filters.append(
+            or_(
+                Movie.name.ilike(pattern),
+                Movie.description.ilike(pattern),
+                Movie.stars.any(Star.name.ilike(pattern)),
+                Movie.directors.any(Director.name.ilike(pattern)),
+            )
+        )
+    if genre_id is not None:
+        filters.append(Movie.genres.any(Genre.id == genre_id))
+    if year_from is not None:
+        filters.append(Movie.year >= year_from)
+    if year_to is not None:
+        filters.append(Movie.year <= year_to)
+    if imdb_from is not None:
+        filters.append(Movie.imdb >= imdb_from)
+    if imdb_to is not None:
+        filters.append(Movie.imdb <= imdb_to)
+
+    total = await db.scalar(select(func.count(Movie.id)).where(*filters)) or 0
+    sort_column = getattr(Movie, sort_by)
+    ordering = sort_column.desc() if sort_order == "desc" else sort_column.asc()
+    statement = (
+        select(Movie)
+        .where(*filters)
+        .options(
+            selectinload(Movie.certification),
+            selectinload(Movie.genres),
+            selectinload(Movie.directors),
+            selectinload(Movie.stars),
+        )
+        .order_by(ordering, Movie.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    result = await db.execute(statement)
+    return result.scalars().unique().all(), total
+
+
+async def list_genres_with_counts(
+    db: AsyncSession,
+) -> Sequence[tuple[Genre, int]]:
+    """List genres with their linked movie counts."""
+    statement = (
+        select(Genre, func.count(Movie.id))
+        .outerjoin(Genre.movies)
+        .group_by(Genre.id)
+        .order_by(Genre.name)
+    )
+    result = await db.execute(statement)
+    return result.all()
 
 
 async def create_movie(db: AsyncSession, data: MovieCreate) -> Movie:

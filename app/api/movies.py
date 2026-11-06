@@ -1,7 +1,7 @@
 """Movie catalog API endpoints."""
 from typing import TypeVar
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_moderator
@@ -9,6 +9,8 @@ from app.db.session import get_db
 from app.models.movie import Certification, Director, Genre, Movie, Star
 from app.schemas.movie import (
     MovieCreate,
+    GenreWithMovieCount,
+    MovieListResponse,
     MovieResponse,
     MovieUpdate,
     NamedEntityCreate,
@@ -65,6 +67,32 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     return movie
 
 
+@router.get("", response_model=MovieListResponse)
+async def list_movies(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    query: str | None = Query(default=None, max_length=250),
+    genre_id: int | None = None,
+    year_from: int | None = Query(default=None, ge=1888, le=2100),
+    year_to: int | None = Query(default=None, ge=1888, le=2100),
+    imdb_from: float | None = Query(default=None, ge=0, le=10),
+    imdb_to: float | None = Query(default=None, ge=0, le=10),
+    sort_by: str = Query(default="name", pattern="^(name|year|imdb|price|votes)$"),
+    sort_order: str = Query(default="asc", pattern="^(asc|desc)$"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Browse movies with search, filters, sort order, and pagination."""
+    if year_from and year_to and year_from > year_to:
+        raise HTTPException(status_code=400, detail="year_from cannot exceed year_to")
+    if imdb_from and imdb_to and imdb_from > imdb_to:
+        raise HTTPException(status_code=400, detail="imdb_from cannot exceed imdb_to")
+    items, total = await movie_service.list_movies(
+        db, page, page_size, query, genre_id, year_from, year_to,
+        imdb_from, imdb_to, sort_by, sort_order,
+    )
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
+
+
 @router.put("/{movie_id}", response_model=MovieResponse)
 async def update_movie(
     movie_id: int,
@@ -103,6 +131,16 @@ async def delete_movie(
 async def list_genres(db: AsyncSession = Depends(get_db)):
     """List all movie genres."""
     return await movie_service.list_named_entities(db, Genre)
+
+
+@catalog_router.get("/genres/with-counts", response_model=list[GenreWithMovieCount])
+async def list_genres_with_counts(db: AsyncSession = Depends(get_db)):
+    """List genres with the number of assigned movies."""
+    rows = await movie_service.list_genres_with_counts(db)
+    return [
+        {"id": genre.id, "name": genre.name, "movie_count": movie_count}
+        for genre, movie_count in rows
+    ]
 
 
 @catalog_router.post("/genres", response_model=NamedEntityResponse, status_code=201)

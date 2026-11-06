@@ -78,3 +78,20 @@ class MovieResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class MovieListResponse(BaseModel):
+    """Paginated movie catalog response."""
+
+    items: list[MovieResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+class GenreWithMovieCount(BaseModel):
+    """Genre with the number of linked movies."""
+
+    id: int
+    name: str
+    movie_count: int
