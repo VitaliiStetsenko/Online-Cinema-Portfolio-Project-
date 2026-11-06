@@ -5,6 +5,7 @@ from typing import AsyncGenerator
 
 import pytest
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
@@ -25,6 +26,9 @@ os.environ.setdefault("MINIO_SECRET_KEY", "test")
 from app.main import app  # noqa: E402
 from app.db.session import Base, get_db  # noqa: E402
 from app.models.user import UserGroup, UserGroupEnum  # noqa: E402
+from app.models.user import User  # noqa: E402
+from app.models.movie import Certification, Movie  # noqa: E402
+from app.core.security import create_access_token, get_password_hash  # noqa: E402
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -72,3 +76,91 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def user(db_session: AsyncSession) -> User:
+    """Create an active regular user."""
+    group = await db_session.scalar(select(UserGroup).where(UserGroup.name == UserGroupEnum.USER.value))
+    user = User(
+        email="user@example.com",
+        hashed_password=get_password_hash("SecurePass123"),
+        is_active=True,
+        group_id=group.id,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+async def moderator(db_session: AsyncSession) -> User:
+    """Create an active moderator user."""
+    group = await db_session.scalar(select(UserGroup).where(UserGroup.name == UserGroupEnum.MODERATOR.value))
+    user = User(
+        email="moderator@example.com",
+        hashed_password=get_password_hash("SecurePass123"),
+        is_active=True,
+        group_id=group.id,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+async def other_user(db_session: AsyncSession) -> User:
+    """Create a second active regular user."""
+    group = await db_session.scalar(select(UserGroup).where(UserGroup.name == UserGroupEnum.USER.value))
+    user = User(
+        email="other@example.com",
+        hashed_password=get_password_hash("SecurePass123"),
+        is_active=True,
+        group_id=group.id,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+def auth_headers(user: User) -> dict[str, str]:
+    """Build bearer authorization headers for the regular user."""
+    return {"Authorization": f"Bearer {create_access_token({'sub': str(user.id)})}"}
+
+
+@pytest.fixture
+def moderator_headers(moderator: User) -> dict[str, str]:
+    """Build bearer authorization headers for the moderator."""
+    return {"Authorization": f"Bearer {create_access_token({'sub': str(moderator.id)})}"}
+
+
+@pytest.fixture
+def other_auth_headers(other_user: User) -> dict[str, str]:
+    """Build bearer authorization headers for the second user."""
+    return {"Authorization": f"Bearer {create_access_token({'sub': str(other_user.id)})}"}
+
+
+@pytest.fixture
+async def movie(db_session: AsyncSession) -> Movie:
+    """Create a movie with a required certification."""
+    certification = Certification(name="PG-13")
+    db_session.add(certification)
+    await db_session.flush()
+    movie = Movie(
+        name="Test Movie",
+        year=2024,
+        time=120,
+        imdb=8.0,
+        votes=100,
+        description="A movie created for tests.",
+        price=9.99,
+        certification_id=certification.id,
+    )
+    db_session.add(movie)
+    await db_session.commit()
+    await db_session.refresh(movie)
+    return movie

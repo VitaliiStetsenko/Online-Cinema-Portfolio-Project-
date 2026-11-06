@@ -21,6 +21,7 @@ async def get_or_create_cart(db: AsyncSession, user_id: int) -> Cart:
             selectinload(Cart.items).selectinload(CartItem.movie).selectinload(Movie.directors),
             selectinload(Cart.items).selectinload(CartItem.movie).selectinload(Movie.stars),
         )
+        .execution_options(populate_existing=True)
     )
     if not cart:
         cart = Cart(user_id=user_id)
@@ -77,6 +78,7 @@ async def clear_cart(db: AsyncSession, user_id: int) -> None:
         for item in cart.items:
             await db.delete(item)
         await db.commit()
+        await db.refresh(cart, ["items"])
 
 
 def calculate_total(cart: Cart) -> Decimal:

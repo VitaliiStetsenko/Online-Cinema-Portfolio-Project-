@@ -52,7 +52,12 @@ async def create_comment(db: AsyncSession, user_id: int, movie_id: int, text: st
 
 async def get_comment(db: AsyncSession, comment_id: int) -> Comment | None:
     """Get a comment with its reactions."""
-    return await db.scalar(select(Comment).where(Comment.id == comment_id).options(selectinload(Comment.likes)))
+    return await db.scalar(
+        select(Comment)
+        .where(Comment.id == comment_id)
+        .options(selectinload(Comment.likes))
+        .execution_options(populate_existing=True)
+    )
 
 
 async def list_comments(db: AsyncSession, movie_id: int) -> Sequence[Comment]:
@@ -97,7 +102,7 @@ async def set_comment_reaction(db: AsyncSession, user_id: int, comment_id: int, 
 
 def serialize_comment(comment: Comment, current_user_id: int) -> dict:
     """Prepare comment data including the current user's reaction."""
-    likes_count = sum(reaction.is_like for reaction in comment.likes)
+    likes_count = sum(1 for reaction in comment.likes if reaction.is_like)
     dislikes_count = len(comment.likes) - likes_count
     reaction = next((item.is_like for item in comment.likes if item.user_id == current_user_id), None)
     return {

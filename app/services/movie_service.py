@@ -7,6 +7,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.cart import CartItem
 from app.models.movie import Certification, Director, Genre, Movie, Star
 from app.schemas.movie import MovieCreate, MovieUpdate
 
@@ -186,7 +187,8 @@ async def update_movie(db: AsyncSession, movie: Movie, data: MovieUpdate) -> Mov
 
 async def delete_movie(db: AsyncSession, movie: Movie) -> None:
     """Delete a movie not referenced by a cart or purchase."""
-    if movie.in_carts:
+    cart_item = await db.scalar(select(CartItem.id).where(CartItem.movie_id == movie.id))
+    if cart_item:
         raise ValueError("Movie cannot be deleted while it is in user carts")
     await db.delete(movie)
     await db.commit()

@@ -2,6 +2,7 @@
 
 from decimal import Decimal
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -62,7 +63,7 @@ class MovieResponse(BaseModel):
     """Response schema for a movie."""
 
     id: int
-    uuid: str
+    uuid: UUID
     name: str
     year: int
     time: int

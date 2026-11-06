@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from app.models.user import User, UserGroup, ActivationToken, PasswordResetToken, RefreshToken
 from app.core.security import (
     get_password_hash,
@@ -24,7 +25,7 @@ async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
 
 async def get_user_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
     """Get user by id."""
-    result = await db.execute(select(User).where(User.id == user_id))
+    result = await db.execute(select(User).where(User.id == user_id).options(selectinload(User.group)))
     return result.scalar_one_or_none()
 
 
@@ -92,6 +93,7 @@ async def resend_activation(db: AsyncSession, email: str) -> bool:
     old_token = result.scalar_one_or_none()
     if old_token:
         await db.delete(old_token)
+        await db.flush()
 
     # Create new token
     token = secrets.token_urlsafe(32)
@@ -150,7 +152,7 @@ async def refresh_access_token(db: AsyncSession, refresh_token_str: str) -> Opti
     user_id = int(payload.get("sub"))
     access_token = create_access_token({"sub": str(user_id)})
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "refresh_token": refresh_token_str, "token_type": "bearer"}
 
 
 async def logout_user(db: AsyncSession, refresh_token_str: str) -> bool:
@@ -188,6 +190,7 @@ async def request_password_reset(db: AsyncSession, email: str) -> bool:
     old_token = result.scalar_one_or_none()
     if old_token:
         await db.delete(old_token)
+        await db.flush()
 
     # Create new token
     token = secrets.token_urlsafe(32)
