@@ -1,4 +1,5 @@
 """Pydantic schemas for the movie catalog."""
+
 from decimal import Decimal
 from typing import Optional
 

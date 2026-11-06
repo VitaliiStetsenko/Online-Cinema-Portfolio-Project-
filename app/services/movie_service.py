@@ -1,4 +1,5 @@
 """Services for movie catalog management."""
+
 from collections.abc import Sequence
 from typing import TypeVar
 
@@ -12,16 +13,12 @@ from app.schemas.movie import MovieCreate, MovieUpdate
 CatalogModel = TypeVar("CatalogModel", Genre, Director, Star, Certification)
 
 
-async def get_named_entity(
-    db: AsyncSession, model: type[CatalogModel], entity_id: int
-) -> CatalogModel | None:
+async def get_named_entity(db: AsyncSession, model: type[CatalogModel], entity_id: int) -> CatalogModel | None:
     """Find a catalog entity by its identifier."""
     return await db.get(model, entity_id)
 
 
-async def create_named_entity(
-    db: AsyncSession, model: type[CatalogModel], name: str
-) -> CatalogModel:
+async def create_named_entity(db: AsyncSession, model: type[CatalogModel], name: str) -> CatalogModel:
     """Create a genre, star, director, or certification."""
     exists = await db.scalar(select(model).where(model.name.ilike(name)))
     if exists:
@@ -34,25 +31,19 @@ async def create_named_entity(
     return entity
 
 
-async def list_named_entities(
-    db: AsyncSession, model: type[CatalogModel]
-) -> Sequence[CatalogModel]:
+async def list_named_entities(db: AsyncSession, model: type[CatalogModel]) -> Sequence[CatalogModel]:
     """List catalog entities alphabetically."""
     result = await db.execute(select(model).order_by(model.name))
     return result.scalars().all()
 
 
-async def delete_named_entity(
-    db: AsyncSession, entity: CatalogModel
-) -> None:
+async def delete_named_entity(db: AsyncSession, entity: CatalogModel) -> None:
     """Delete an unused catalog entity."""
     await db.delete(entity)
     await db.commit()
 
 
-async def _get_entities(
-    db: AsyncSession, model: type[CatalogModel], ids: list[int]
-) -> Sequence[CatalogModel]:
+async def _get_entities(db: AsyncSession, model: type[CatalogModel], ids: list[int]) -> Sequence[CatalogModel]:
     """Load and validate entities selected for a movie."""
     if not ids:
         return []
@@ -139,12 +130,7 @@ async def list_genres_with_counts(
     db: AsyncSession,
 ) -> Sequence[tuple[Genre, int]]:
     """List genres with their linked movie counts."""
-    statement = (
-        select(Genre, func.count(Movie.id))
-        .outerjoin(Genre.movies)
-        .group_by(Genre.id)
-        .order_by(Genre.name)
-    )
+    statement = select(Genre, func.count(Movie.id)).outerjoin(Genre.movies).group_by(Genre.id).order_by(Genre.name)
     result = await db.execute(statement)
     return result.all()
 
@@ -183,9 +169,7 @@ async def update_movie(db: AsyncSession, movie: Movie, data: MovieUpdate) -> Mov
             setattr(movie, relation, await _get_entities(db, model, ids))
 
     if "certification_id" in update_data:
-        certification = await get_named_entity(
-            db, Certification, update_data["certification_id"]
-        )
+        certification = await get_named_entity(db, Certification, update_data["certification_id"])
         if not certification:
             raise ValueError("Certification not found")
 

@@ -1,4 +1,5 @@
 """Ratings and comments API endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,9 +29,7 @@ async def set_rating(
 ):
     """Set or update the current user's 1-10 movie rating."""
     try:
-        return await interaction_service.set_rating(
-            db, current_user.id, movie_id, data.score
-        )
+        return await interaction_service.set_rating(db, current_user.id, movie_id, data.score)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
@@ -57,9 +56,7 @@ async def create_comment(
 ):
     """Write a comment for a movie."""
     try:
-        comment = await interaction_service.create_comment(
-            db, current_user.id, movie_id, data.text
-        )
+        comment = await interaction_service.create_comment(db, current_user.id, movie_id, data.text)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return interaction_service.serialize_comment(comment, current_user.id)
@@ -73,10 +70,7 @@ async def list_comments(
 ):
     """List comments for a movie."""
     comments = await interaction_service.list_comments(db, movie_id)
-    return [
-        interaction_service.serialize_comment(comment, current_user.id)
-        for comment in comments
-    ]
+    return [interaction_service.serialize_comment(comment, current_user.id) for comment in comments]
 
 
 @router.put("/comments/{comment_id}", response_model=CommentResponse)
@@ -121,9 +115,7 @@ async def set_comment_reaction(
 ):
     """Like or dislike a comment."""
     try:
-        comment = await interaction_service.set_comment_reaction(
-            db, current_user.id, comment_id, is_like
-        )
+        comment = await interaction_service.set_comment_reaction(db, current_user.id, comment_id, is_like)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     data = interaction_service.serialize_comment(comment, current_user.id)

@@ -1,4 +1,5 @@
 """Celery configuration."""
+
 from celery import Celery
 from app.core.config import settings
 
@@ -6,7 +7,7 @@ celery_app = Celery(
     "online_cinema",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.tasks.email_tasks", "app.tasks.cleanup_tasks"]
+    include=["app.tasks.email_tasks", "app.tasks.cleanup_tasks"],
 )
 
 celery_app.conf.update(

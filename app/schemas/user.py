@@ -1,4 +1,5 @@
 """Pydantic schemas for user profiles."""
+
 from datetime import datetime, date
 from typing import Optional
 from pydantic import BaseModel, Field
@@ -7,6 +8,7 @@ from app.models.user import GenderEnum
 
 class UserProfileCreate(BaseModel):
     """User profile creation schema."""
+
     first_name: Optional[str] = Field(None, max_length=100)
     last_name: Optional[str] = Field(None, max_length=100)
     gender: Optional[GenderEnum] = None
@@ -16,6 +18,7 @@ class UserProfileCreate(BaseModel):
 
 class UserProfileUpdate(BaseModel):
     """User profile update schema."""
+
     first_name: Optional[str] = Field(None, max_length=100)
     last_name: Optional[str] = Field(None, max_length=100)
     gender: Optional[GenderEnum] = None
@@ -25,6 +28,7 @@ class UserProfileUpdate(BaseModel):
 
 class UserProfileResponse(BaseModel):
     """User profile response schema."""
+
     id: int
     user_id: int
     first_name: Optional[str]
@@ -40,6 +44,7 @@ class UserProfileResponse(BaseModel):
 
 class UserFullResponse(BaseModel):
     """Full user info with profile."""
+
     id: int
     email: str
     is_active: bool

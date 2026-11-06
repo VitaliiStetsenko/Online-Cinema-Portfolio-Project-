@@ -1,4 +1,5 @@
 """Pydantic schemas for favorite movies."""
+
 from datetime import datetime
 
 from pydantic import BaseModel

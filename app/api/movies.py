@@ -1,4 +1,5 @@
 """Movie catalog API endpoints."""
+
 from typing import TypeVar
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
@@ -6,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_moderator
 from app.db.session import get_db
-from app.models.movie import Certification, Director, Genre, Movie, Star
+from app.models.movie import Certification, Director, Genre, Star
 from app.schemas.movie import (
     MovieCreate,
     GenreWithMovieCount,
@@ -24,9 +25,7 @@ catalog_router = APIRouter(prefix="/catalog", tags=["Catalog management"])
 CatalogModel = TypeVar("CatalogModel", Genre, Director, Star, Certification)
 
 
-async def _create_entity(
-    model: type[CatalogModel], data: NamedEntityCreate, db: AsyncSession
-) -> CatalogModel:
+async def _create_entity(model: type[CatalogModel], data: NamedEntityCreate, db: AsyncSession) -> CatalogModel:
     """Create a named catalog entity or return a validation error."""
     try:
         return await movie_service.create_named_entity(db, model, data.name)
@@ -34,9 +33,7 @@ async def _create_entity(
         raise HTTPException(status_code=400, detail=str(error)) from error
 
 
-async def _delete_entity(
-    model: type[CatalogModel], entity_id: int, db: AsyncSession
-) -> Response:
+async def _delete_entity(model: type[CatalogModel], entity_id: int, db: AsyncSession) -> Response:
     """Delete a named catalog entity by identifier."""
     entity = await movie_service.get_named_entity(db, model, entity_id)
     if not entity:
@@ -87,8 +84,17 @@ async def list_movies(
     if imdb_from and imdb_to and imdb_from > imdb_to:
         raise HTTPException(status_code=400, detail="imdb_from cannot exceed imdb_to")
     items, total = await movie_service.list_movies(
-        db, page, page_size, query, genre_id, year_from, year_to,
-        imdb_from, imdb_to, sort_by, sort_order,
+        db,
+        page,
+        page_size,
+        query,
+        genre_id,
+        year_from,
+        year_to,
+        imdb_from,
+        imdb_to,
+        sort_by,
+        sort_order,
     )
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
@@ -137,10 +143,7 @@ async def list_genres(db: AsyncSession = Depends(get_db)):
 async def list_genres_with_counts(db: AsyncSession = Depends(get_db)):
     """List genres with the number of assigned movies."""
     rows = await movie_service.list_genres_with_counts(db)
-    return [
-        {"id": genre.id, "name": genre.name, "movie_count": movie_count}
-        for genre, movie_count in rows
-    ]
+    return [{"id": genre.id, "name": genre.name, "movie_count": movie_count} for genre, movie_count in rows]
 
 
 @catalog_router.post("/genres", response_model=NamedEntityResponse, status_code=201)
@@ -162,7 +165,9 @@ async def list_directors(db: AsyncSession = Depends(get_db)):
 
 
 @catalog_router.post("/directors", response_model=NamedEntityResponse, status_code=201)
-async def create_director(data: NamedEntityCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_moderator)):
+async def create_director(
+    data: NamedEntityCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_moderator)
+):
     """Create a director. Moderator access is required."""
     return await _create_entity(Director, data, db)
 
@@ -198,7 +203,9 @@ async def list_certifications(db: AsyncSession = Depends(get_db)):
 
 
 @catalog_router.post("/certifications", response_model=NamedEntityResponse, status_code=201)
-async def create_certification(data: NamedEntityCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_moderator)):
+async def create_certification(
+    data: NamedEntityCreate, db: AsyncSession = Depends(get_db), _=Depends(get_current_moderator)
+):
     """Create a certification. Moderator access is required."""
     return await _create_entity(Certification, data, db)
 

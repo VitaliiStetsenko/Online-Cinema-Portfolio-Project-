@@ -1,4 +1,5 @@
 """Services for user favorite movies."""
+
 from collections.abc import Sequence
 
 from sqlalchemy import func, select
@@ -15,11 +16,7 @@ async def add_favorite(db: AsyncSession, user_id: int, movie_id: int) -> Favorit
     if not movie:
         raise ValueError("Movie not found")
 
-    existing = await db.scalar(
-        select(Favorite).where(
-            Favorite.user_id == user_id, Favorite.movie_id == movie_id
-        )
-    )
+    existing = await db.scalar(select(Favorite).where(Favorite.user_id == user_id, Favorite.movie_id == movie_id))
     if existing:
         raise ValueError("Movie is already in favorites")
 
@@ -29,9 +26,7 @@ async def add_favorite(db: AsyncSession, user_id: int, movie_id: int) -> Favorit
     return await get_favorite(db, user_id, movie_id)
 
 
-async def get_favorite(
-    db: AsyncSession, user_id: int, movie_id: int
-) -> Favorite | None:
+async def get_favorite(db: AsyncSession, user_id: int, movie_id: int) -> Favorite | None:
     """Get a favorite entry with the movie details."""
     statement = (
         select(Favorite)
@@ -46,13 +41,9 @@ async def get_favorite(
     return await db.scalar(statement)
 
 
-async def list_favorites(
-    db: AsyncSession, user_id: int, page: int, page_size: int
-) -> tuple[Sequence[Favorite], int]:
+async def list_favorites(db: AsyncSession, user_id: int, page: int, page_size: int) -> tuple[Sequence[Favorite], int]:
     """List a user's favorite movies with pagination."""
-    total = await db.scalar(
-        select(func.count(Favorite.id)).where(Favorite.user_id == user_id)
-    ) or 0
+    total = await db.scalar(select(func.count(Favorite.id)).where(Favorite.user_id == user_id)) or 0
     statement = (
         select(Favorite)
         .where(Favorite.user_id == user_id)
@@ -72,11 +63,7 @@ async def list_favorites(
 
 async def remove_favorite(db: AsyncSession, user_id: int, movie_id: int) -> bool:
     """Remove a movie from the user's favorites."""
-    favorite = await db.scalar(
-        select(Favorite).where(
-            Favorite.user_id == user_id, Favorite.movie_id == movie_id
-        )
-    )
+    favorite = await db.scalar(select(Favorite).where(Favorite.user_id == user_id, Favorite.movie_id == movie_id))
     if not favorite:
         return False
     await db.delete(favorite)

@@ -1,4 +1,5 @@
 """Favorite movies API endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,9 +33,7 @@ async def list_favorites(
     db: AsyncSession = Depends(get_db),
 ):
     """List the current user's favorite movies."""
-    items, total = await favorite_service.list_favorites(
-        db, current_user.id, page, page_size
-    )
+    items, total = await favorite_service.list_favorites(db, current_user.id, page, page_size)
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 

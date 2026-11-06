@@ -1,4 +1,5 @@
 """Shopping cart API endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 

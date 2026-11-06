@@ -1,4 +1,5 @@
 """Pydantic schemas for shopping cart."""
+
 from datetime import datetime
 from decimal import Decimal
 
