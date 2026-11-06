@@ -29,11 +29,26 @@ async def add_favorite(
 async def list_favorites(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    query: str | None = Query(default=None, max_length=250),
+    genre_id: int | None = None,
+    year_from: int | None = Query(default=None, ge=1888, le=2100),
+    year_to: int | None = Query(default=None, ge=1888, le=2100),
+    imdb_from: float | None = Query(default=None, ge=0, le=10),
+    imdb_to: float | None = Query(default=None, ge=0, le=10),
+    sort_by: str = Query(default="added_at", pattern="^(added_at|name|year|imdb|price|votes)$"),
+    sort_order: str = Query(default="desc", pattern="^(asc|desc)$"),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List the current user's favorite movies."""
-    items, total = await favorite_service.list_favorites(db, current_user.id, page, page_size)
+    """List favorites with catalog search, filter, sort, and pagination."""
+    if year_from and year_to and year_from > year_to:
+        raise HTTPException(status_code=400, detail="year_from cannot exceed year_to")
+    if imdb_from and imdb_to and imdb_from > imdb_to:
+        raise HTTPException(status_code=400, detail="imdb_from cannot exceed imdb_to")
+    items, total = await favorite_service.list_favorites(
+        db, current_user.id, page, page_size, query, genre_id, year_from,
+        year_to, imdb_from, imdb_to, sort_by, sort_order,
+    )
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 
