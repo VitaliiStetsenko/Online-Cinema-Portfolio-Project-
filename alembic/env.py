@@ -8,7 +8,7 @@ from app.core.config import settings
 from app.db.session import Base
 from app.models.user import UserGroup, User, UserProfile, ActivationToken, PasswordResetToken, RefreshToken
 from app.models.movie import Genre, Star, Director, Certification, Movie
-from app.models.interaction import Favorite, Rating, Comment, CommentLike
+from app.models.interaction import Favorite, Rating, Comment, CommentLike, MovieReaction, Notification
 from app.models.cart import Cart, CartItem
 
 # this is the Alembic Config object, which provides
@@ -16,7 +16,7 @@ from app.models.cart import Cart, CartItem
 config = context.config
 
 # Set sqlalchemy.url from settings
-config.set_main_option("sqlalchemy.url", settings.database_url.replace('+asyncpg', ''))
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("+asyncpg", ""))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -71,9 +71,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

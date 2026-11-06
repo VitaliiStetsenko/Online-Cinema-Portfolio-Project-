@@ -59,9 +59,7 @@ async def list_users(db: AsyncSession) -> list[User]:
     return list(result.scalars())
 
 
-async def update_user_by_admin(
-    db: AsyncSession, user: User, group_name: str | None, is_active: bool | None
-) -> User:
+async def update_user_by_admin(db: AsyncSession, user: User, group_name: str | None, is_active: bool | None) -> User:
     """Change a user's role or activation status as an administrator."""
     if group_name is not None:
         group = await db.scalar(select(UserGroup).where(UserGroup.name == group_name))

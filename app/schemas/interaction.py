@@ -36,6 +36,7 @@ class CommentCreate(BaseModel):
     """Input schema for a movie comment."""
 
     text: str = Field(min_length=1, max_length=5000)
+    parent_comment_id: int | None = None
 
 
 class CommentUpdate(BaseModel):
@@ -65,3 +66,21 @@ class CommentReactionResponse(BaseModel):
     is_like: bool
     likes_count: int
     dislikes_count: int
+
+
+class MovieReactionResponse(BaseModel):
+    """Response schema for a movie reaction."""
+
+    movie_id: int
+    is_like: bool
+    likes_count: int
+    dislikes_count: int
+
+
+class NotificationResponse(BaseModel):
+    """Response schema for a user notification."""
+
+    id: int
+    message: str
+    is_read: bool
+    created_at: datetime

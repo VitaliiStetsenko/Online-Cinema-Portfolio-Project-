@@ -11,6 +11,8 @@ from app.schemas.interaction import (
     CommentReactionResponse,
     CommentResponse,
     CommentUpdate,
+    MovieReactionResponse,
+    NotificationResponse,
     MovieRatingSummary,
     RatingCreate,
     RatingResponse,
@@ -56,7 +58,9 @@ async def create_comment(
 ):
     """Write a comment for a movie."""
     try:
-        comment = await interaction_service.create_comment(db, current_user.id, movie_id, data.text)
+        comment = await interaction_service.create_comment(
+            db, current_user.id, movie_id, data.text, data.parent_comment_id
+        )
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return interaction_service.serialize_comment(comment, current_user.id)
@@ -125,3 +129,38 @@ async def set_comment_reaction(
         "likes_count": data["likes_count"],
         "dislikes_count": data["dislikes_count"],
     }
+
+
+@router.put("/movies/{movie_id}/reaction", response_model=MovieReactionResponse)
+async def set_movie_reaction(
+    movie_id: int,
+    is_like: bool,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Like or dislike a movie."""
+    try:
+        return await interaction_service.set_movie_reaction(db, current_user.id, movie_id, is_like)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.get("/notifications", response_model=list[NotificationResponse])
+async def list_notifications(
+    current_user: User = Depends(get_current_active_user), db: AsyncSession = Depends(get_db)
+):
+    """List notifications about comment replies and reactions."""
+    return await interaction_service.list_notifications(db, current_user.id)
+
+
+@router.patch("/notifications/{notification_id}/read", response_model=NotificationResponse)
+async def mark_notification_read(
+    notification_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark one notification as read."""
+    notification = await interaction_service.mark_notification_read(db, current_user.id, notification_id)
+    if not notification:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return notification

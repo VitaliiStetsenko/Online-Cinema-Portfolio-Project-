@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.interaction import Comment, CommentLike, Rating
+from app.models.interaction import Comment, CommentLike, MovieReaction, Notification, Rating
 from app.models.movie import Movie
 
 
@@ -40,12 +40,20 @@ async def get_rating_summary(db: AsyncSession, user_id: int, movie_id: int) -> d
     }
 
 
-async def create_comment(db: AsyncSession, user_id: int, movie_id: int, text: str) -> Comment:
+async def create_comment(
+    db: AsyncSession, user_id: int, movie_id: int, text: str, parent_comment_id: int | None = None
+) -> Comment:
     """Create a comment for a movie."""
     if not await db.get(Movie, movie_id):
         raise ValueError("Movie not found")
-    comment = Comment(user_id=user_id, movie_id=movie_id, text=text)
+    if parent_comment_id is not None:
+        parent = await get_comment(db, parent_comment_id)
+        if not parent or parent.movie_id != movie_id:
+            raise ValueError("Parent comment not found")
+    comment = Comment(user_id=user_id, movie_id=movie_id, text=text, parent_comment_id=parent_comment_id)
     db.add(comment)
+    if parent_comment_id is not None and parent.user_id != user_id:
+        db.add(Notification(user_id=parent.user_id, message="Someone replied to your comment"))
     await db.commit()
     return await get_comment(db, comment.id)
 
@@ -96,8 +104,55 @@ async def set_comment_reaction(db: AsyncSession, user_id: int, comment_id: int, 
         reaction.is_like = is_like
     else:
         db.add(CommentLike(user_id=user_id, comment_id=comment_id, is_like=is_like))
+    if comment.user_id != user_id:
+        action = "liked" if is_like else "disliked"
+        db.add(Notification(user_id=comment.user_id, message=f"Someone {action} your comment"))
     await db.commit()
     return await get_comment(db, comment_id)
+
+
+async def set_movie_reaction(db: AsyncSession, user_id: int, movie_id: int, is_like: bool) -> dict:
+    """Create or replace a like or dislike for a movie."""
+    if not await db.get(Movie, movie_id):
+        raise ValueError("Movie not found")
+    reaction = await db.scalar(
+        select(MovieReaction).where(MovieReaction.user_id == user_id, MovieReaction.movie_id == movie_id)
+    )
+    if reaction:
+        reaction.is_like = is_like
+    else:
+        db.add(MovieReaction(user_id=user_id, movie_id=movie_id, is_like=is_like))
+    await db.commit()
+    return await get_movie_reaction_summary(db, movie_id, is_like)
+
+
+async def get_movie_reaction_summary(db: AsyncSession, movie_id: int, is_like: bool | None = None) -> dict:
+    """Calculate movie like and dislike totals."""
+    likes = await db.scalar(
+        select(func.count(MovieReaction.id)).where(MovieReaction.movie_id == movie_id, MovieReaction.is_like.is_(True))
+    ) or 0
+    dislikes = await db.scalar(
+        select(func.count(MovieReaction.id)).where(MovieReaction.movie_id == movie_id, MovieReaction.is_like.is_(False))
+    ) or 0
+    return {"movie_id": movie_id, "is_like": is_like, "likes_count": likes, "dislikes_count": dislikes}
+
+
+async def list_notifications(db: AsyncSession, user_id: int) -> Sequence[Notification]:
+    """List notifications for a user from newest to oldest."""
+    result = await db.execute(select(Notification).where(Notification.user_id == user_id).order_by(Notification.created_at.desc()))
+    return result.scalars().all()
+
+
+async def mark_notification_read(db: AsyncSession, user_id: int, notification_id: int) -> Notification | None:
+    """Mark a user's notification as read."""
+    notification = await db.scalar(
+        select(Notification).where(Notification.id == notification_id, Notification.user_id == user_id)
+    )
+    if notification:
+        notification.is_read = True
+        await db.commit()
+        await db.refresh(notification)
+    return notification
 
 
 def serialize_comment(comment: Comment, current_user_id: int) -> dict:

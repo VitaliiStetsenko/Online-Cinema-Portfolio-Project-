@@ -80,7 +80,9 @@ async def update_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     try:
-        user = await user_service.update_user_by_admin(db, user, data.group.value if data.group else None, data.is_active)
+        user = await user_service.update_user_by_admin(
+            db, user, data.group.value if data.group else None, data.is_active
+        )
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     return _admin_response(user)
