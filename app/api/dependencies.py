@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.core.security import decode_token
 from app.services.auth_service import get_user_by_id
-from app.models.user import User
+from app.models.user import User, UserGroupEnum
 
 security = HTTPBearer()
 
@@ -50,5 +50,20 @@ async def get_current_active_user(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user"
+        )
+    return current_user
+
+
+async def get_current_moderator(
+    current_user: User = Depends(get_current_active_user)
+) -> User:
+    """Require moderator or administrator access."""
+    if current_user.group.name not in {
+        UserGroupEnum.MODERATOR.value,
+        UserGroupEnum.ADMIN.value,
+    }:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Moderator access required",
         )
     return current_user
